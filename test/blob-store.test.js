@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { BlobPreconditionFailedError } from '@vercel/blob';
 import { BlobStore } from '../lib/blob-store.js';
 import { createApp } from '../server.js';
+import { PixNotifications } from '../lib/notifications.js';
 
 // Shared service with separate clients, uncached reads, and atomic ETag writes.
 function storageService() {
@@ -55,6 +56,46 @@ test('Blob conditional updates never revert paid or refunded status across clien
   assert.equal((await a.get(o.id, o.owner)).status, 'paid');
   await Promise.all([a.status(o.id, 'refunded', o.owner), b.status(o.id, 'paid', o.owner)]);
   assert.equal((await b.get(o.id, o.owner)).status, 'refunded');
+});
+
+test('Blob handles early and reordered webhooks atomically across independent functions',async()=>{
+  const service=storageService(),a=new BlobStore(service),b=new BlobStore(service),o=reservation();
+  await a.insert(o);
+  const event={id:'early-pix',amount:o.amount,status:'paid'};
+  await Promise.all([a.webhook(o.id,event,o.owner),b.webhook(o.id,{...event,status:'pending'},o.owner)]);
+  await b.charge(o.id,{id:event.id,code:'test-qr',expiresAt:null},o.owner);
+  assert.equal((await a.get(o.id,o.owner)).status,'paid');assert.equal((await a.get(o.id,o.owner)).code,'test-qr');
+  await assert.rejects(()=>b.webhook(o.id,{...event,id:'another-transaction'},o.owner),e=>e.status===409);
+  await assert.rejects(()=>b.webhook(o.id,{...event,amount:1},o.owner),e=>e.status===409);
+  await assert.rejects(()=>b.webhook(o.id,event,'other-owner'),e=>e.status===404);
+  await a.status(o.id,'refunded',o.owner);await b.webhook(o.id,event,o.owner);
+  assert.equal((await b.get(o.id,o.owner)).status,'refunded');
+});
+
+test('Blob notification leases deduplicate across restarts and retry failed sends',async()=>{
+  const service=storageService(),a=new BlobStore(service),b=new BlobStore(service),o=reservation({notify:true});
+  await a.insert(o);await a.webhook(o.id,{id:'test',amount:o.amount,status:'pending'},o.owner);
+  let sends=0,fail=true;
+  const notifier=new PixNotifications({pendingUrl:'https://api.pushcut.io/test/notifications/test',paidUrl:'',fetcher:async()=>{sends++;return new Response('',{status:fail?503:200});}});
+  await assert.rejects(()=>notifier.deliver(a,o.id,'pending',o.owner),e=>e.status===503);
+  fail=false;
+  await Promise.allSettled([notifier.deliver(a,o.id,'pending',o.owner),notifier.deliver(b,o.id,'pending',o.owner)]);
+  await notifier.deliver(new BlobStore(service),o.id,'pending',o.owner);
+  assert.equal(sends,2);assert.ok((await a.get(o.id,o.owner)).notifications.pending.sentAt);
+  await a.webhook(o.id,{id:'test',amount:o.amount,status:'paid'},o.owner);
+  assert.equal(await b.claimNotification(o.id,'pending',o.owner,'late'),'done');
+});
+
+test('old orders are not retroactively notified and abandoned notification leases can be retried',async()=>{
+  const store=new BlobStore(storageService()),old=reservation(),fresh=reservation({notify:true});
+  await store.insert(old);await store.charge(old.id,{id:'old',code:'pix',expiresAt:null},old.owner);
+  assert.equal(await store.claimNotification(old.id,'pending',old.owner,'test'),'done');
+  await store.insert(fresh);await store.charge(fresh.id,{id:'new',code:'pix',expiresAt:null},fresh.owner);
+  assert.equal(await store.claimNotification(fresh.id,'pending',fresh.owner,'first'),'claimed');
+  await store.mutate(store.path(fresh.owner),data=>{data.orders.find(o=>o.id===fresh.id).notifications.pending.leaseUntil=0;return {};});
+  assert.equal(await store.claimNotification(fresh.id,'pending',fresh.owner,'second'),'claimed');
+  await store.finishNotification(fresh.id,'pending',fresh.owner,'first',true);
+  assert.equal((await store.get(fresh.id,fresh.owner)).notifications.pending.sentAt,undefined);
 });
 
 test('Blob retains uncertain orders while allowing new attempts', async () => {

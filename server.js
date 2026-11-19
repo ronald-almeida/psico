@@ -8,6 +8,8 @@ import { products, orderItems, accessLink } from './lib/catalog.js';
 import { validateCustomer } from './lib/validation.js';
 import { createStore } from './lib/store.js';
 import { NexumGateway } from './lib/nexum.js';
+import { NexumWebhooks, parsePixEvent } from './lib/webhook.js';
+import { PixNotifications } from './lib/notifications.js';
 
 const root = fileURLToPath(new URL('./public/', import.meta.url));
 const hash = value => createHash('sha256').update(value).digest('hex');
@@ -31,9 +33,13 @@ async function readJson(req) {
 }
 
 export function createApp({ gateway = new NexumGateway(), store = createStore(process.env.DATABASE_PATH || './data/orders.sqlite'),
-  origin = process.env.PUBLIC_ORIGIN || 'http://127.0.0.1:3000' } = {}) {
+  origin = process.env.PUBLIC_ORIGIN || 'http://127.0.0.1:3000', webhooks = new NexumWebhooks({ origin }), notifications = new PixNotifications() } = {}) {
   const secure = new URL(origin).protocol === 'https:';
   const inflight = new Map();
+  async function notifyWithoutBlockingCheckout(order) {
+    try { await notifications.deliver(store,order.id,order.status,order.owner); }
+    catch { console.warn('Pix notification delivery pending; retry on webhook or next order check.'); }
+  }
   function json(res, status, payload) {
     res.writeHead(status, {'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});
     res.end(JSON.stringify(payload));
@@ -80,6 +86,14 @@ export function createApp({ gateway = new NexumGateway(), store = createStore(pr
     res.setHeader('Content-Security-Policy',"default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; frame-ancestors 'none'; form-action 'self'; base-uri 'none'");
     try {
       const url = new URL(req.url, origin);
+      if (url.pathname === '/api/webhooks/nexum') {
+        if (req.method !== 'POST') throw error(405, 'Método não permitido.');
+        const { id, owner } = webhooks.authenticate(req.headers['x-webhook-token']);
+        const event = parsePixEvent(await readJson(req), id);
+        await store.webhook(id, event, owner);
+        await notifications.deliver(store,id,event.status,owner);
+        return json(res, 200, { received: true });
+      }
       if (url.pathname.startsWith('/api/')) {
         if (req.headers['sec-fetch-site'] === 'cross-site' || (req.headers.origin && req.headers.origin !== origin)) throw error(403,'Origem não permitida.');
         const owner = session(req,res);
@@ -102,10 +116,11 @@ export function createApp({ gateway = new NexumGateway(), store = createStore(pr
           if (existing) return await existingOrder(existing);
           gateway.assertReady();
           const id=randomUUID();
-          const reserved=await store.insert({id,owner,key:input.requestKey,fingerprint,amount,items});
+          const webhook=webhooks.configuration(id,owner);
+          const reserved=await store.insert({id,owner,key:input.requestKey,fingerprint,amount,items,notify:notifications.isConfigured()});
           if (!reserved.created) return await existingOrder(reserved.order);
           try {
-            const charge=await gateway.createCharge({reference:id,amountCents:amount,customer,items});
+            const charge=await gateway.createCharge({reference:id,amountCents:amount,customer,items,webhook});
             if (!charge || typeof charge.id!=='string' || charge.id.length>200 ||
                 (charge.code!==null && (typeof charge.code!=='string' || charge.code.length<20 || charge.code.length>4096)) || charge.amountCents!==amount ||
                 (charge.expiresAt && (!Number.isFinite(Date.parse(charge.expiresAt)) || Date.parse(charge.expiresAt)<=Date.now()))) throw new Error('Invalid gateway response');
@@ -116,14 +131,18 @@ export function createApp({ gateway = new NexumGateway(), store = createStore(pr
             await store.status(id,'creation_unknown',owner);
             return json(res,202,await publicOrder(await store.get(id,owner)));
           }
-          return json(res,201,await publicOrder(await store.get(id,owner)));
+          const created=await store.get(id,owner);
+          await notifyWithoutBlockingCheckout(created);
+          return json(res,201,await publicOrder(created));
         }
         const match=url.pathname.match(/^\/api\/orders\/([a-f0-9-]{36})$/);
         if (req.method==='GET' && match) {
           if (!await store.allow(`status:${owner}`,120,60000)) throw error(429,'Aguarde alguns instantes para consultar novamente.');
           const o=await store.get(match[1],owner);
           if (!o || o.owner!==owner) throw error(404,'Pedido não encontrado neste navegador.');
-          return json(res,200,await publicOrder(await refresh(o)));
+          const updated=await refresh(o);
+          await notifyWithoutBlockingCheckout(updated);
+          return json(res,200,await publicOrder(updated));
         }
         throw error(404,'Página não encontrada.');
       }
