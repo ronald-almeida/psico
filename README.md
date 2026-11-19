@@ -34,7 +34,9 @@ Configure as variáveis **somente no servidor**, em Vercel → psico → Setting
 
 Faça um novo deploy após configurar variáveis. Sem credenciais Nexum, as ofertas e os checkouts são exibidos, mas o botão de pagamento fica indisponível. A aplicação nunca gera Pix fictício em produção. Não copie chaves de outros gateways.
 
-Não há integração automática de matrícula, envio de e-mail ou criação de contas em uma área de membros. A página de confirmação mostra o recibo e, se configurado, o link específico do produto. A autorização de acesso ao conteúdo deve ser feita pela plataforma de cursos; um link comum não cria matrícula nem substitui o controle de acesso dessa plataforma.
+Após confirmar o Pix, o checkout abre `/obrigado?pedido=...`, com agradecimento, recibo e botão **Continuar no WhatsApp**, direcionado ao **(75) 98839-3742** (`https://wa.me/5575988393742`). A mensagem vem preenchida com o produto e o número do pedido para solicitar orientações de acesso; o cliente precisa enviá-la. A página só exibe a confirmação e esse botão após verificar o pagamento no servidor.
+
+Não há integração automática de matrícula, envio de e-mail ou criação de contas em uma área de membros. Se configurado, o link específico do produto também é exibido. A autorização de acesso ao conteúdo deve ser feita pela plataforma de cursos; um link comum não cria matrícula nem substitui o controle de acesso dessa plataforma.
 
 ## Contrato Nexum
 

@@ -12,7 +12,11 @@ async function initialize(){
     }
     document.querySelector('#confirmed-icon').hidden=false;
     document.querySelector('#thanks-title').textContent='Obrigada pela sua compra!';
-    document.querySelector('#thanks-description').textContent='Seu pagamento foi confirmado. Guarde o número do seu pedido: '+o.id;
+    document.querySelector('#thanks-description').textContent='Seu pagamento no Pix foi confirmado. Estamos felizes em ter você com a gente!';
+    const whatsapp=new URL('https://wa.me/5575988393742');
+    whatsapp.searchParams.set('text',`Olá! Concluí minha compra de ${o.items.map(item=>item.name).join(' + ')} e gostaria das orientações de acesso.\n\nNúmero do pedido: ${o.id}`);
+    document.querySelector('#whatsapp-link').href=whatsapp.href;
+    document.querySelector('#receipt-id').textContent=o.id;
     document.querySelector('#confirmed-content').hidden=false;
     summary(document.querySelector('#receipt-items'),o.items);
     document.querySelector('#receipt-total').textContent=money(o.amount);

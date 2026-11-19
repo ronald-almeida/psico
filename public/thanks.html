@@ -1,2 +1,47 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#050505"><title>Seu acesso • Daniela Janssen</title><link rel="icon" href="/assets/favicon.svg"><link rel="stylesheet" href="/style.css"><script type="module" src="/thanks.js"></script></head><body><main class="status-shell"><div class="status-brand"><img src="/assets/favicon.svg" alt="" width="34" height="34">Daniela Janssen</div><section class="status-card"><div id="loader" class="loading-dot" aria-label="Verificando pagamento"></div><div id="confirmed-icon" class="confirmation-icon" hidden aria-hidden="true">✓</div><p class="eyebrow">BLACK FRIDAY</p><h1 id="thanks-title">Verificando sua compra</h1><p id="thanks-description" class="status-description">Aguarde enquanto confirmamos o pagamento do seu pedido.</p><div id="confirmed-content" hidden><div class="receipt"><p>SEU PEDIDO</p><div id="receipt-items"></div><div class="summary-total"><strong>Total pago no Pix</strong><output id="receipt-total"></output></div></div><a id="access-link" class="primary-button" rel="noopener noreferrer" hidden>Acessar meu produto</a></div><p id="thanks-error" class="error-message" role="alert" hidden></p><a id="return-link" class="secondary-button" href="/" hidden>Voltar ao checkout</a></section><footer class="page-footer">Daniela Janssen · Black Friday</footer></main></body></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#050505">
+  <title>Obrigada pela sua compra • Daniela Janssen</title>
+  <link rel="icon" href="/assets/favicon.svg">
+  <link rel="stylesheet" href="/style.css?v=whatsapp-1">
+  <script type="module" src="/thanks.js?v=whatsapp-1"></script>
+</head>
+<body>
+  <main class="status-shell">
+    <div class="status-brand"><img src="/assets/favicon.svg" alt="" width="34" height="34">Daniela Janssen</div>
+    <section class="status-card" aria-labelledby="thanks-title">
+      <div id="loader" class="loading-dot" aria-label="Verificando pagamento"></div>
+      <div id="confirmed-icon" class="confirmation-icon" hidden aria-hidden="true">✓</div>
+      <p class="eyebrow">BLACK FRIDAY</p>
+      <h1 id="thanks-title">Verificando sua compra</h1>
+      <p id="thanks-description" class="status-description" aria-live="polite">Aguarde enquanto confirmamos o pagamento do seu pedido.</p>
+      <div id="confirmed-content" hidden>
+        <div class="whatsapp-next-step">
+          <h2>Seu próximo passo</h2>
+          <p>Fale com a nossa equipe pelo WhatsApp para receber as orientações de acesso ao seu produto.</p>
+          <a id="whatsapp-link" class="primary-button" rel="noopener noreferrer">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M21 11.5a9 9 0 0 1-13.4 7.9L3 21l1.5-4.7A9 9 0 1 1 21 11.5Z"/><path d="M8 7c-.8.5-.9 1.6-.4 2.8 1.1 2.6 3 4.5 5.6 5.6 1.2.5 2.3.4 2.8-.4l.6-1.2-2.8-1.4-.8 1c-1.6-.7-2.7-1.8-3.4-3.4l1-.8L9.2 6.4Z"/></svg>
+            Continuar no WhatsApp
+          </a>
+          <p class="small-note">(75) 98839-3742 · A mensagem já vai com o número do seu pedido. Basta enviar.</p>
+        </div>
+        <div class="receipt">
+          <p>SEU PEDIDO</p>
+          <div id="receipt-items"></div>
+          <div class="summary-total"><strong>Total pago no Pix</strong><output id="receipt-total"></output></div>
+          <p class="order-reference">Número do pedido: <span id="receipt-id"></span></p>
+        </div>
+        <a id="access-link" class="secondary-button" rel="noopener noreferrer" hidden>Acessar meu produto</a>
+      </div>
+      <p id="thanks-error" class="error-message" role="alert" hidden></p>
+      <a id="return-link" class="secondary-button" href="/" hidden>Voltar ao checkout</a>
+    </section>
+    <footer class="page-footer">Daniela Janssen · Black Friday</footer>
+  </main>
+</body>
+</html>
 
