@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Checkout Pix | Daniela Janssen</title><link rel="icon" href="/assets/favicon.svg"><link rel="stylesheet" href="/style.css"><script type="module" src="/checkout.js"></script></head>
+<body><main class="checkout-shell"><a href="/" class="back-link">Voltar às ofertas</a><section class="checkout-card">
+<header class="checkout-brand"><span class="brand-name">DANIELA JANSSEN</span><span class="secure-label">Compra segura</span></header>
+<div class="checkout-content"><div class="product-header"><img id="product-image" alt="" width="88" height="100" hidden><div><p class="eyebrow">BLACK FRIDAY</p><h1 id="product-name">Carregando sua oferta</h1><p class="author">Autor: Daniela Janssen</p><strong id="product-price" class="product-price"></strong><p class="price-note">À vista no Pix · pagamento único</p></div></div><p id="product-description" class="product-description"></p>
+<form id="checkout-form"><fieldset><legend>Dados pessoais</legend>
+<label for="email">Seu e-mail</label><input id="email" name="email" type="email" autocomplete="email" placeholder="Digite seu e-mail para a compra" required maxlength="254">
+<label for="confirm-email">Confirme seu e-mail</label><input id="confirm-email" name="confirmEmail" type="email" autocomplete="off" placeholder="Digite novamente seu e-mail" required maxlength="254">
+<label for="name">Nome completo</label><input id="name" name="name" autocomplete="name" placeholder="Digite seu nome completo" required minlength="5" maxlength="120">
+<label for="document">CPF</label><input id="document" name="document" inputmode="numeric" autocomplete="off" placeholder="000.000.000-00" required maxlength="14">
+</fieldset><fieldset class="payment-method"><legend>Forma de pagamento</legend><div class="pix-option"><img src="/assets/pix.svg" alt="" width="28" height="28"><strong>Pix</strong><span class="selected-label">Selecionado</span></div><div class="pix-description"><strong>Pague à vista com Pix</strong><p>Ao continuar, você recebe um QR Code e um código copia e cola para pagar no aplicativo do seu banco.</p><p>A confirmação será verificada automaticamente.</p></div></fieldset>
+<section class="purchase-summary" aria-label="Detalhes da compra"><h2>Detalhes da compra</h2><div id="summary-items"></div><div class="summary-total"><strong>Total no Pix</strong><output id="total">—</output></div></section>
+<p id="form-error" class="error-message" role="alert" hidden></p><p id="availability" class="availability" role="status" hidden>O pagamento está temporariamente indisponível. Tente novamente mais tarde.</p>
+<button id="pay-button" class="primary-button" type="submit" disabled>Gerar Pix e finalizar compra</button><p class="small-note">Seus dados serão usados para gerar e identificar o pagamento.</p>
+</form><noscript><p class="error-message">Ative o JavaScript para carregar a oferta e gerar seu Pix.</p></noscript></div></section><footer class="page-footer">Daniela Janssen · Pagamento à vista no Pix</footer></main></body></html>
