@@ -33,6 +33,24 @@ function storageService() {
 }
 const reservation = (overrides = {}) => ({ id: randomUUID(), owner: 'session', key: randomUUID(), fingerprint: 'hash', amount: 59970, items: [], ...overrides });
 
+test('Blob updates retain a strong ETag when the storage response can be compressed', async () => {
+  const service=storageService(),read=service.reader;
+  service.reader=async(path,options)=>{
+    const result=await read(path,options);
+    // The live Blob CDN returns a weak ETag for Brotli/gzip representations.
+    // The write API requires the strong ETag of the original stored file.
+    if(result && options.headers?.['Accept-Encoding']!=='identity')result.blob.etag=`W/"${result.blob.etag}"`;
+    return result;
+  };
+  const store=new BlobStore(service),first=reservation();
+  await store.insert(first);
+  await store.charge(first.id,{id:'test-only',code:'test-no-payment',expiresAt:null},first.owner);
+  const second=reservation();
+  assert.equal((await store.insert(second)).created,true);
+  assert.equal((await store.get(first.id,first.owner)).gateway_id,'test-only');
+  assert.equal((await store.read(store.path(first.owner))).data.orders.length,2);
+});
+
 test('Blob clients deduplicate only matching attempt keys and allow independent attempts', async () => {
   for (const sameKey of [true, false]) {
     const service = storageService();
