@@ -4,6 +4,8 @@ import { resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createApp } from '../server.js';
 import { createStore } from '../lib/store.js';
+import { NexumWebhooks } from '../lib/webhook.js';
+import { PixNotifications } from '../lib/notifications.js';
 if(process.env.NODE_ENV==='production')throw new Error('Local QA cannot run in production');
 const control=resolve('../qa-status.txt');
 const charges=new Map();
@@ -11,6 +13,8 @@ const gateway={assertReady(){},async createCharge({amountCents,reference}){
   const id=`nexum_test_${randomUUID()}`;charges.set(id,{id,reference,amountCents});
   return {id,amountCents,code:'TESTE LOCAL SEM VALOR. ESTE NAO E UM CODIGO PIX. NAO PAGAR.',expiresAt:new Date(Date.now()+900000).toISOString()};
 },async getCharge(id){let status='pending';try{status=readFileSync(control,'utf8').trim();}catch{}return {...charges.get(id),status};}};
-const {server}=createApp({gateway,store:createStore(':memory:'),origin:'http://127.0.0.1:3001'});
+const {server}=createApp({gateway,store:createStore(':memory:'),origin:'http://127.0.0.1:3001',
+  webhooks:new NexumWebhooks({origin:'http://127.0.0.1:3001',secret:''}),
+  notifications:new PixNotifications({pendingUrl:'',paidUrl:''})});
 server.listen(3001,'127.0.0.1',()=>console.log('SIMULAÇÃO LOCAL: http://127.0.0.1:3001 — sem transações reais.'));
 

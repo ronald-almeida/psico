@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "node --env-file-if-exists=.env --watch server.js",
     "start": "node --env-file-if-exists=.env server.js",
-    "test": "node --test --test-isolation=none test/*.test.js",
+    "test": "node --import ./scripts/test-env.js --test --test-isolation=none test/*.test.js",
     "check": "node scripts/check.js",
     "build": "pnpm check && pnpm test"
   },
